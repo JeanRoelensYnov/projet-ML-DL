@@ -1,7 +1,5 @@
 #! /bin/sh
 
-# Check if python is installed
-
 MODULE_NAME="kaggle"
 
 # Function to exit context
@@ -12,43 +10,37 @@ exiter() {
     exit 0
 }
 
-if
-    command -v python3 &
-    >/dev/null
-then
+# Check if python is installed
+
+if type -P python >/dev/null 2>&1 || type -P python3 >/dev/null 2>&1; then
     echo "Python is installed"
-    if
-        python -c "import $MODULE_NAME" &
-        >/dev/null
-    then
-        echo "Module $MODULE_NAME already installed."
-    else
-        echo "Module $MODULE_NAME not installed, do you want to install it ? [y/n]."
-
-        # Read user input
-        read -r user_input
-
-        if [ "$user_input" = "y" ]; then
-            # Attempt to install the module
-            echo "Installing $MODULE_NAME..."
-            pip install $MODULE_NAME
-            if [ $? -eq 0 ]; then
-                echo "$MODULE_NAME has been installed successfully."
-            else
-                exiter "Failed to install $MODULE_NAME. Please check your permissions or pip installation."
-            fi
-        else
-            exiter "Installation skipped."
-        fi
-    fi
 else
-    exiter "Python not installed please install it before running this script."
+    exiter "Python is not installed"
 fi
 
-# Set the environment variable for Kaggle credentials
-export KAGGLE_CONFIG_DIR=./kaggle_credentials
+# Check if kaggle module is installed
 
-# Running python script
+if python -c "import $MODULE_NAME" >/dev/null 2>&1; then
+    echo "Module '$MODULE_NAME' is already installed."
+else
+    echo "Module '$MODULE_NAME' is not installed, do you want to install it [y/n]?"
+    read -r user_input
+
+    if [ "$user_input" == "y" ]; then
+        # Install the module
+        echo "Installing $MODULE_NAME..."
+        pip install $MODULE_NAME
+
+        if [ $? -eq 0 ]; then
+            echo "$MODULE_NAME has been installed successfully."
+        else
+            exiter "Failed to install $MODULE_NAME, please check your permissions or pip installation."
+        fi
+    else
+        exiter "Installation skipped"
+    fi
+fi
+
+echo "Pulling data..."
 python ./data_processing/pull_data.py
-
-read -p "Press enter to close terminal..."
+exiter "Data pulled."
